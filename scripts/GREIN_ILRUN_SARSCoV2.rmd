@@ -1,0 +1,139 @@
+---
+title: "ILRUN in COVID19"
+author: "Marina Alexander"
+date: "19/05/2020"
+output:
+  pdf_document: default
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+
+# remind R where to look for libraries
+.libPaths(c("C:/Users/ale097/Data School/Packages"))
+# load libraries
+library(tidyverse)
+library(dplyr)
+library(knitr)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+```
+
+```{r GSE147507}
+
+GSE147507_metadata <- read_csv("data/GSE147507_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE147507_transcript_TPM <- read_csv("data/GSE147507_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023"| X1 == "ENST00000374026"| X1 == "ENST00000374021") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ILRUN-202", "ENST00000374026" = "ILRUN-203", "ENST00000374021" = "ILRUN-201"))) %>%
+  left_join(GSE147507_metadata, by = "sample") %>% 
+  filter(isoform == "ILRUN-202")
+
+GSE147507_transcript_TPM_A549 <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "A549")
+
+plot_GSE147507_A549 <- ggplot(GSE147507_transcript_TPM_A549, aes( x= treatment, y = counts, color = ACE2)) +
+  geom_jitter(width = 0.2)+
+  labs(title = "ilrun expression in A549 cells", 
+       x = "infection",
+       y = "normalized counts")+
+  facet_wrap(~virus)
+
+ggsave(filename = "results/GSE147507_A549.png", plot = plot_GSE147507_A549, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_NHBE <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "NHBE") %>% 
+  filter(virus == "SARS-CoV-2")
+
+plot_GSE147507_NHBE <- ggplot(GSE147507_transcript_TPM_NHBE, aes( y= counts, x = treatment)) +
+  geom_boxplot()+
+  labs(title = "SARS-CoV2 infected primary human bronchial epithelial cells", 
+       x = "infection",
+       y = "ilrun normalized counts")
+
+ggsave(filename = "results/GSE147507_NHBE.png", plot = plot_GSE147507_NHBE, width = 15, height = 15, dpi = 600, units = "cm")
+
+
+GSE147507_transcript_TPM_NHBE_IAV <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "NHBE") %>% 
+  filter(virus == "IAV")
+
+plot_GSE147507_NHBE_IAV <- ggplot(GSE147507_transcript_TPM_NHBE_IAV, aes( x= counts, y = treatment)) +
+  geom_boxplot(size = 1)+
+  labs(title = "Influenza infected primary human bronchial epithelial cells", 
+       x = "normalised counts",
+       y = "treatment")
+
+ggsave(filename = "results/GSE147507_NHBE_IAV.png", plot = plot_GSE147507_NHBE_IAV, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_Calu3 <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "Calu-3")
+
+plot_GSE147507_Calu3 <- ggplot(GSE147507_transcript_TPM_Calu3, aes( x= characteristics, y = counts)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in SARS-CoV2 infected Calu3 cells", 
+       x = "",
+       y = "normalized counts")
+
+ggsave(filename = "results/GSE147507_Calu3.png", plot = plot_GSE147507_Calu3, width = 15, height = 15, dpi = 600, units = "cm")
+
+
+GSE147507_transcript_TPM_biopsy <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "Lung Biopsy")
+
+plot_GSE147507_biopsy <- ggplot(GSE147507_transcript_TPM_biopsy, aes( x= virus, y = counts)) +
+  geom_point(size = 5)+
+  labs(title = "ilrun expression in COVID19 lung biopsy", 
+       x = "patient",
+       y = "normalized counts")
+
+ggsave(filename = "results/GSE147507_biopsy.png", plot = plot_GSE147507_biopsy, width = 15, height = 15, dpi = 600, units = "cm")
+
+```
+
+
+```{r GSE56192}
+GSE147507_metadata <- read_csv("data/GSE56192_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE147507_transcript_TPM <- read_csv("data/GSE147507_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023"| X1 == "ENST00000374026"| X1 == "ENST00000374021") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ILRUN-202", "ENST00000374026" = "ILRUN-203", "ENST00000374021" = "ILRUN-201"))) %>%
+  left_join(GSE147507_metadata, by = "sample") %>% 
+  filter(isoform == "ILRUN-202")
+
+GSE147507_transcript_TPM_A549 <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "A549")
+
+plot_GSE147507_A549 <- ggplot(GSE147507_transcript_TPM_A549, aes( x= treatment, y = counts, color = ACE2)) +
+  geom_jitter(width = 0.2)+
+  labs(title = "ilrun expression in A549 cells", 
+       x = "infection",
+       y = "normalized counts")+
+  facet_wrap(~virus)
+
+ggsave(filename = "results/GSE147507_A549.png", plot = plot_GSE147507_A549, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_NHBE <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "NHBE") %>% 
+  filter(virus == "SARS-CoV-2")
+
+plot_GSE147507_NHBE <- ggplot(GSE147507_transcript_TPM_NHBE, aes( y= counts, x = treatment)) +
+  geom_boxplot()+
+  labs(title = "SARS-CoV2 infected primary human bronchial epithelial cells", 
+       x = "infection",
+       y = "ilrun normalized counts")
+
+ggsave(filename = "results/GSE147507_NHBE.png", plot = plot_GSE147507_NHBE, width = 15, height = 15, dpi = 600, units = "cm")
+```
+
+
