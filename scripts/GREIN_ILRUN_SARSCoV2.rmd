@@ -101,39 +101,84 @@ ggsave(filename = "results/GSE147507_biopsy.png", plot = plot_GSE147507_biopsy, 
 
 
 ```{r GSE56192}
-GSE147507_metadata <- read_csv("data/GSE56192_filtered_metadata.csv") %>% 
+GSE56192_metadata <- read_csv("data/GSE56192_filtered_metadata.csv") %>% 
   rename("sample" = "X1")
 
-GSE147507_transcript_TPM <- read_csv("data/GSE147507_TranscriptLevel_TPM_data.csv") %>%
-  filter(X1 == "ENST00000374023"| X1 == "ENST00000374026"| X1 == "ENST00000374021") %>%
+GSE56192_transcript_TPM <- read_csv("data/GSE56192_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023" | X1 == "ENST00000258743" | X1 == "ENST00000276927" | X1 == "ENST00000380232" | X1 == "ENST00000229135" | X1 == "ENST00000333625") %>%
   gather(sample, counts, -X1) %>%
-  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ILRUN-202", "ENST00000374026" = "ILRUN-203", "ENST00000374021" = "ILRUN-201"))) %>%
-  left_join(GSE147507_metadata, by = "sample") %>% 
-  filter(isoform == "ILRUN-202")
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ilrun", "ENST00000258743" = "IL6", "ENST00000276927" = "IFNa", "ENST00000380232" = "IFNb", "ENST00000229135" = "IFNg", "ENST00000333625" = "IFNl"))) %>%
+  left_join(GSE56192_metadata, by = "sample")
 
-GSE147507_transcript_TPM_A549 <- GSE147507_transcript_TPM %>% 
-  filter(cell_line == "A549")
 
-plot_GSE147507_A549 <- ggplot(GSE147507_transcript_TPM_A549, aes( x= treatment, y = counts, color = ACE2)) +
+
+GSE56192_transcript_TPM_virus <- GSE56192_transcript_TPM %>% 
+  filter(virus == "SARS"| virus == "Mock") %>% 
+  filter(treatment != "Gleevec")
+plot_GSE56192_virus <- ggplot(GSE56192_transcript_TPM_virus, aes( y= counts, x = isoform, color = treatment, shape = time_point)) +
   geom_jitter(width = 0.2)+
-  labs(title = "ilrun expression in A549 cells", 
-       x = "infection",
-       y = "normalized counts")+
-  facet_wrap(~virus)
+  scale_y_log10()+
+  labs(title = "ilrun expression in SARS-CoV-1 infected MRC5 cells", 
+       x = "treatment",
+       y = "normalised counts")
+ggsave(filename = "results/GSE56192_virus.png", plot = plot_GSE56192_virus, width = 20, height = 15, dpi = 600, units = "cm")
 
-ggsave(filename = "results/GSE147507_A549.png", plot = plot_GSE147507_A549, width = 15, height = 15, dpi = 600, units = "cm")
-
-GSE147507_transcript_TPM_NHBE <- GSE147507_transcript_TPM %>% 
-  filter(cell_line == "NHBE") %>% 
-  filter(virus == "SARS-CoV-2")
-
-plot_GSE147507_NHBE <- ggplot(GSE147507_transcript_TPM_NHBE, aes( y= counts, x = treatment)) +
+GSE56192_transcript_TPM_mock <- GSE56192_transcript_TPM %>% 
+  filter(virus == "Mock")
+plot_GSE56192_mock <- ggplot(GSE56192_transcript_TPM_mock, aes( y= counts, x = treatment, color = time_point)) +
   geom_boxplot()+
-  labs(title = "SARS-CoV2 infected primary human bronchial epithelial cells", 
-       x = "infection",
-       y = "ilrun normalized counts")
+  labs(title = "ilrun expression in SARS-CoV-1 infected MRC5 cells", 
+       x = "treament",
+       y = "normalised counts")
+ggsave(filename = "results/GSE56192_mock.png", plot = plot_GSE56192_mock, width = 20, height = 15, dpi = 600, units = "cm")
 
-ggsave(filename = "results/GSE147507_NHBE.png", plot = plot_GSE147507_NHBE, width = 15, height = 15, dpi = 600, units = "cm")
+
+
 ```
 
+```{r GSE93330}
+
+GSE93330_metadata <- read_csv("data/GSE93330_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE56192_transcript_TPM <- read_csv("data/GSE93330_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023" | X1 == "ENST00000258743") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ilrun", "ENST00000258743" = "IL6"))) %>%
+  left_join(GSE93330_metadata, by = "sample")
+
+
+plot_GSE93330 <- ggplot(GSE56192_transcript_TPM, aes( y= counts, x = isoform, color = characteristics)) +
+  geom_boxplot()+
+  scale_y_log10()+
+  labs(title = "ilrun expression in TNFa-stimulated human lung microvascular endothelial cells", 
+       x = "transcript",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE93330.png", plot = plot_GSE93330, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE93330 Gene level}
+
+GSE93330_metadata <- read_csv("data/GSE93330_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE56192_gene_CPM <- read_csv("data/GSE93330_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>%
+  select(-gene_symbol) %>% 
+  filter(X1 == "ENSG00000196821" | X1 == "ENSG00000136244") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENSG00000196821" = "ilrun", "ENSG00000136244" = "IL6"))) %>%
+  left_join(GSE93330_metadata, by = "sample")
+
+
+plot_GSE93330_gene <- ggplot(GSE56192_gene_CPM, aes( y= counts, x = isoform, color = characteristics)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in TNFa-stimulated human lung microvascular endothelial cells", 
+       x = "treatment",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE93330_gene.png", plot = plot_GSE93330_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
 
