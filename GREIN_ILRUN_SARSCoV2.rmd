@@ -1,0 +1,608 @@
+---
+title: "ILRUN in COVID19"
+author: "Marina Alexander"
+date: "19/05/2020"
+output:
+  pdf_document: default
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+
+# remind R where to look for libraries
+.libPaths(c("C:/Users/ale097/Data School/Packages"))
+# load libraries
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(cowplot)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+```
+
+```{r GSE147507}
+
+GSE147507_metadata <- read_csv("data/GSE147507_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE147507_transcript_TPM <- read_csv("data/GSE147507_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023"| X1 == "ENST00000374026"| X1 == "ENST00000374021" | X1 == "ENST00000252519") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ILRUN-202", "ENST00000374026" = "ILRUN-203", "ENST00000374021" = "ILRUN-201", "ENST00000252519" ="ACE2"))) %>%
+  left_join(GSE147507_metadata, by = "sample") %>% 
+  filter(isoform == "ILRUN-202" | isoform == "ACE2")
+
+
+GSE147507_transcript_TPM_AllCells <- GSE147507_transcript_TPM %>% 
+  full_join(GSE86986_transcript_TPM)
+
+
+plot_GSE147507_AllCells <- ggplot(GSE147507_transcript_TPM_AllCells, aes( x= cell_line, y = counts)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in different SARS-CoV-2 permissive cells", 
+       x = "Cell type",
+       y = "normalized counts")
+
+ggsave(filename = "results/GSE147507_AllCells.png", plot = plot_GSE147507_AllCells, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_A549 <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "A549")
+
+plot_GSE147507_A549 <- ggplot(GSE147507_transcript_TPM_A549, aes( x= treatment, y = counts, color = ACE2)) +
+  geom_jitter(width = 0.2)+
+  labs(title = "ilrun expression in A549 cells", 
+       x = "infection",
+       y = "normalized counts")+
+  facet_wrap(~virus)
+
+ggsave(filename = "results/GSE147507_A549.png", plot = plot_GSE147507_A549, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_NHBE <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "NHBE") %>% 
+  filter(virus == "SARS-CoV-2")
+
+plot_GSE147507_NHBE <- ggplot(GSE147507_transcript_TPM_NHBE, aes( y= counts, x = treatment)) +
+  geom_boxplot()+
+  labs(title = "SARS-CoV2 infected primary human bronchial epithelial cells", 
+       x = "infection",
+       y = "ilrun normalized counts")
+
+ggsave(filename = "results/GSE147507_NHBE.png", plot = plot_GSE147507_NHBE, width = 15, height = 15, dpi = 600, units = "cm")
+
+
+GSE147507_transcript_TPM_NHBE_IAV <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "NHBE") %>% 
+  filter(virus == "IAV")
+
+plot_GSE147507_NHBE_IAV <- ggplot(GSE147507_transcript_TPM_NHBE_IAV, aes( x= counts, y = treatment)) +
+  geom_boxplot(size = 1)+
+  labs(title = "Influenza infected primary human bronchial epithelial cells", 
+       x = "normalised counts",
+       y = "treatment")
+
+ggsave(filename = "results/GSE147507_NHBE_IAV.png", plot = plot_GSE147507_NHBE_IAV, width = 15, height = 15, dpi = 600, units = "cm")
+
+GSE147507_transcript_TPM_Calu3 <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "Calu-3")
+
+plot_GSE147507_Calu3 <- ggplot(GSE147507_transcript_TPM_Calu3, aes( x= characteristics, y = counts)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in SARS-CoV2 infected Calu3 cells", 
+       x = "",
+       y = "normalized counts")
+
+ggsave(filename = "results/GSE147507_Calu3.png", plot = plot_GSE147507_Calu3, width = 15, height = 15, dpi = 600, units = "cm")
+
+
+GSE147507_transcript_TPM_biopsy <- GSE147507_transcript_TPM %>% 
+  filter(cell_line == "Lung Biopsy")
+
+plot_GSE147507_biopsy <- ggplot(GSE147507_transcript_TPM_biopsy, aes( x= virus, y = counts, color = isoform)) +
+  geom_point(size = 5)+
+  labs(title = "ilrun expression in COVID19 lung biopsy", 
+       x = "patient",
+       y = "normalized counts")
+
+ggsave(filename = "results/GSE147507_biopsy.png", plot = plot_GSE147507_biopsy, width = 15, height = 15, dpi = 600, units = "cm")
+
+```
+
+
+```{r GSE56192}
+GSE56192_metadata <- read_csv("data/GSE56192_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE56192_transcript_TPM <- read_csv("data/GSE56192_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023" | X1 == "ENST00000258743" | X1 == "ENST00000276927" | X1 == "ENST00000380232" | X1 == "ENST00000229135" | X1 == "ENST00000333625") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ilrun", "ENST00000258743" = "IL6", "ENST00000276927" = "IFNa", "ENST00000380232" = "IFNb", "ENST00000229135" = "IFNg", "ENST00000333625" = "IFNl"))) %>%
+  left_join(GSE56192_metadata, by = "sample")
+
+
+
+GSE56192_transcript_TPM_virus <- GSE56192_transcript_TPM %>% 
+  filter(virus == "SARS"| virus == "Mock") %>% 
+  filter(treatment != "Gleevec")
+plot_GSE56192_virus <- ggplot(GSE56192_transcript_TPM_virus, aes( y= counts, x = isoform, color = treatment, shape = time_point)) +
+  geom_jitter(width = 0.2)+
+  scale_y_log10()+
+  labs(title = "ilrun expression in SARS-CoV-1 infected MRC5 cells", 
+       x = "treatment",
+       y = "normalised counts")
+ggsave(filename = "results/GSE56192_virus.png", plot = plot_GSE56192_virus, width = 20, height = 15, dpi = 600, units = "cm")
+
+GSE56192_transcript_TPM_mock <- GSE56192_transcript_TPM %>% 
+  filter(virus == "Mock")
+plot_GSE56192_mock <- ggplot(GSE56192_transcript_TPM_mock, aes( y= counts, x = treatment, color = time_point)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in SARS-CoV-1 infected MRC5 cells", 
+       x = "treament",
+       y = "normalised counts")
+ggsave(filename = "results/GSE56192_mock.png", plot = plot_GSE56192_mock, width = 20, height = 15, dpi = 600, units = "cm")
+
+
+
+```
+
+```{r GSE93330}
+
+GSE93330_metadata <- read_csv("data/GSE93330_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE56192_transcript_TPM <- read_csv("data/GSE93330_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023" | X1 == "ENST00000258743"| X1 == "ENST00000252519"| X1 == "ENST00000427411") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENSG00000196821" = "ilrun", "ENSG00000136244" = "IL6"))) %>%
+  left_join(GSE93330_metadata, by = "sample")
+
+
+
+plot_GSE93330 <- ggplot(GSE56192_transcript_TPM, aes( y= counts, x = isoform, color = characteristics)) +
+  geom_boxplot()+
+  scale_y_log10()+
+  labs(title = "ilrun expression in TNFa-stimulated human lung microvascular endothelial cells", 
+       x = "transcript",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE93330.png", plot = plot_GSE93330, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE93330 Gene level}
+
+GSE93330_metadata <- read_csv("data/GSE93330_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE56192_gene_CPM <- read_csv("data/GSE93330_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>%
+  select(-gene_symbol) %>% 
+  filter(X1 == "ENSG00000196821" | X1 == "ENSG00000130234") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENSG00000196821" = "ilrun", "ENSG00000130234" = "ACE2"))) %>%
+  left_join(GSE93330_metadata, by = "sample")
+
+
+plot_GSE93330_gene <- ggplot(GSE56192_gene_CPM, aes( y= counts, x = isoform, color = characteristics)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in TNFa-stimulated human lung microvascular endothelial cells", 
+       x = "treatment",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE93330_gene.png", plot = plot_GSE93330_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE96649 Gene level}
+
+GSE96649_metadata <- read_csv("data/GSE96649_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+
+GSE96649_gene_CPM <- read_csv("data/GSE96649_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>%
+  select(-gene_symbol) %>% 
+  filter(X1 == "ENSG00000196821") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENSG00000196821" = "ilrun"))) %>%
+  left_join(GSE96649_metadata, by = "sample")
+
+
+plot_GSE96649_gene <- ggplot(GSE96649_gene_CPM, aes( y= counts, x = isoform, color = characteristics )) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in A459 cells", 
+       x = "",
+       y = "ilrun normalised counts")
+
+ggsave(filename = "results/GSE96649_gene.png", plot = plot_GSE96649_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE117993 Gene level Rectal Biopsy}
+
+GSE117993_metadata <- read_csv("data/GSE117993_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+  
+
+GSE117993_gene_CPM <- read_csv("data/GSE117993_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>%
+  select(-gene_symbol) %>% 
+  filter(X1 == "ENSG00000196821" | X1 == "ENSG00000130234" ) %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENSG00000196821" = "ILRUN", "ENSG00000130234" = "ACE2"))) %>%
+  left_join(GSE117993_metadata, by = "sample")
+
+
+plot_GSE117993_gene <- ggplot(GSE117993_gene_CPM, aes( y= counts, x = isoform, color = diagnosis )) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in pediatric rectal biopsy", 
+       x = "",
+       y = "ilrun normalised counts")
+
+ggsave(filename = "results/GSE117993_gene.png", plot = plot_GSE117993_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+
+```{r GSE93330}
+
+GSE113210_metadata <- read_csv("data/GSE113210_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+GSE113210_transcript_TPM <- read_csv("data/GSE113210_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ilrun"))) %>%
+  left_join(GSE113210_metadata, by = "sample") %>% 
+  arrange(age)
+
+
+plot_GSE113210 <- ggplot(GSE113210_transcript_TPM, aes( y= counts, x = group, color = visit)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression Acute viral bronchiolitis (PBMC)", 
+       x = "age",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE113210.png", plot = plot_GSE113210, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE86986}
+
+GSE86986_metadata <- read_csv("data/GSE86986_filtered_metadata.csv") %>% 
+  rename("sample" = "X1")
+GSE86986_transcript_TPM <- read_csv("data/GSE86986_TranscriptLevel_TPM_data.csv") %>%
+  filter(X1 == "ENST00000374023"| X1 == "ENST00000374026"| X1 == "ENST00000374021") %>%
+  gather(sample, counts, -X1) %>%
+  mutate(isoform = str_replace_all(X1, c("ENST00000374023" = "ILRUN-202", "ENST00000374026" = "ILRUN-203", "ENST00000374021" = "ILRUN-201"))) %>%
+  left_join(GSE86986_metadata, by = "sample") %>% 
+  filter(isoform == "ILRUN-202") %>% 
+  mutate(cell_line = "Caco2")
+
+plot_GSE86986 <- ggplot(GSE86986_transcript_TPM, aes( y= counts, x = isoform)) +
+  geom_boxplot()+
+  labs(title = "ilrun expression in Caco2 cells", 
+       x = "isoform",
+       y = "normalised counts")
+
+```
+
+```{r GSE70513 Gene level}
+
+GSE70513_metadata <- read_csv("data/GSE70513_filtered_metadata.csv")
+
+GSE70513_gene_CPM_filtered <- read_csv("data/GSE70513_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>%
+  select(-X1) %>% 
+  filter(gene_symbol == "FBL" | gene_symbol == "IMP4" | gene_symbol == "DDX10" | gene_symbol == "XPO1" | gene_symbol == "MYC" | gene_symbol == "HSPA8" | gene_symbol == "GTPBP4" | gene_symbol == "ESF1" | gene_symbol == "TTK" | gene_symbol == "RPL13A" | gene_symbol == "RPLP2" | gene_symbol == "RPS6"| gene_symbol == "NCL" | gene_symbol == "NOP56"| gene_symbol == "PXDN" | gene_symbol == "C19orf48") %>%
+  gather(GEO_Accession, counts, -gene_symbol) %>%
+  left_join(GSE70513_metadata, by = "GEO_Accession")
+
+GSE70513_gene_CPM_pvalue <-read_csv("data/GSE70513_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>% 
+  select(-X1) %>%
+  distinct(gene_symbol, .keep_all = TRUE) %>%
+  gather(GEO_Accession, counts, -gene_symbol) %>% 
+  left_join(GSE70513_metadata, by = "GEO_Accession") %>% 
+  select(gene_symbol, counts, BNLF2a) %>%
+  group_by(gene_symbol, BNLF2a) %>% 
+  summarise(counts = list(counts)) %>% 
+  spread(BNLF2a, counts) %>%
+  group_by(gene_symbol) %>% 
+  mutate(p_value = t.test(unlist(BNLF2a_neg),unlist(BNLF2a_pos))$p.value,
+         t_value = t.test(unlist(BNLF2a_neg),unlist(BNLF2a_pos))$statistic) %>% 
+  arrange(p_value) %>% 
+  filter(p_value <= 0.5) %>% 
+  select(gene_symbol, p_value)
+
+GSE70513_gene_BNLF2a_diff <-read_csv("data/GSE70513_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>% 
+  select(-X1) %>%
+  distinct(gene_symbol, .keep_all = TRUE) %>%
+  gather(GEO_Accession, counts, -gene_symbol) %>% 
+  left_join(GSE70513_metadata, by = "GEO_Accession") %>%
+  select(gene_symbol, counts, BNLF2a) %>% 
+  group_by(gene_symbol, BNLF2a) %>% 
+  summarise(mean_BNLF2a = mean(counts)) %>% 
+  mutate(BNLF2a_mean_diff= (lag(mean_BNLF2a) - mean_BNLF2a)) %>% 
+  filter(BNLF2a == "BNLF2a_pos") %>% 
+  select(-BNLF2a) %>% 
+  mutate(percent = (BNLF2a_mean_diff/mean_BNLF2a)) %>% 
+  filter(percent > 0.05) %>%
+  filter(!mean_BNLF2a == 0) %>% 
+  select(gene_symbol, mean_BNLF2a, percent)
+
+GSE70513_BNLF2a_signif_diff <- left_join(GSE70513_gene_CPM_pvalue, GSE70513_gene_BNLF2a_diff, by = "gene_symbol") %>%
+  drop_na() %>% 
+  arrange(p_value)
+
+HeV_screen <- read_csv("data/Robust_Z_score_HeVscreen.csv") %>% 
+  select(entrez.gene.name,average.luciferase.normalised.to.mock.robust.z.scored) %>%
+  filter(average.luciferase.normalised.to.mock.robust.z.scored < 0) %>% 
+  mutate(Z_score = average.luciferase.normalised.to.mock.robust.z.scored*-1) %>% 
+  filter(Z_score >1.95) %>% 
+  rename(gene_symbol = entrez.gene.name) %>% 
+  select(gene_symbol, Z_score)
+
+screen_myc <- left_join(GSE70513_BNLF2a_signif_diff, HeV_screen, by = "gene_symbol") %>%
+  drop_na() %>% 
+  select(gene_symbol, p_value, percent, Z_score) %>% 
+  arrange(desc(percent))
+
+write_csv(screen_myc,"results/HeVscreen_myc_upregulated.csv") 
+  
+
+plot_GSE70513_gene <- ggplot(GSE70513_gene_CPM_filtered, aes( y= counts, x = gene_symbol, color = BNLF2a)) +
+  geom_boxplot()+
+  scale_y_log10()+
+  theme(axis.text.x=element_text(angle=90,hjust=1)) +
+  labs(title = "Expression of Hendra host factors in lytic and latent EBV+ve gastic carcinomas", 
+       x = "Host gene",
+       y = "normalised counts")
+
+ggsave(filename = "results/GSE70513_gene.png", plot = plot_GSE70513_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+
+```{r GSE148829_Human_Basal_Pops_TPM}
+
+human1 <- read.csv("data/GSE148829_Human1_Basal_Pops_TPM.csv") %>% 
+  filter(GENE == "C6orf106" | GENE == "ACE2"| GENE == "AGT") %>% 
+  gather(condition, TPM, -GENE ) %>% 
+  separate(condition, c("Infection", "Stimulation", "donor", "B", "S")) %>% 
+  group_by(GENE, Stimulation, donor) %>% 
+  summarise(mean_TPM = mean(TPM))
+
+
+human2 <- read.csv("data/GSE148829_Human2_Basal_Pops_TPM.csv") %>% 
+  filter(GENE == "C6orf106" | GENE == "ACE2"| GENE == "AGT") %>% 
+  gather(condition, TPM, -GENE ) %>% 
+  separate(condition, c("Infection", "Stimulation", "donor", "B", "S")) %>% 
+  group_by(GENE, Stimulation, donor) %>% 
+  summarise(mean_TPM = mean(TPM))
+
+human_BEAS <- read.csv("data/GSE148829_BEAS_Basal_Pops_TPM.csv") %>% 
+  filter(GENE == "C6orf106" | GENE == "ACE2"| GENE == "AGT") %>% 
+  gather(condition, TPM, -GENE ) %>% 
+  separate(condition, c("Infection", "Stimulation", "donor", "B", "S")) %>% 
+  group_by(GENE, Stimulation, donor) %>% 
+  summarise(mean_TPM = mean(TPM))
+
+```
+
+
+```{r GSE157103 COVID severity}
+
+
+GSE157103_metadata_GSM <- read.csv("data/GSE157103_GSM_metadata.csv")
+
+GSE157103_metadata <- read.csv("data/GSE157103_metadata.csv") %>% 
+  select(GEO_Accession..exp., BioSample, Cell_type, disease_state, icu, mechanical_ventilation, ventilator.free_days, DM, sex, fibrinogen) %>%
+  rename(GEO_Accession = GEO_Accession..exp.) %>% 
+  unique() %>% 
+  left_join(GSE157103_metadata_GSM, by ="GEO_Accession") %>% 
+  separate(condition, c("diagnosis", "sample", "age", "sex.2", "hospital_ward" )) %>% 
+  mutate(sample = as.numeric(sample)) %>% 
+  mutate(disease = str_replace_all(diagnosis, c("COVID" = "C", "NONCOVID" = "NC"))) %>%
+  unite("Sample", disease, sample, sep = "")
+  
+GSE157103_metadata_all <- read.csv("data/GSE157103_metadata_all.csv")
+
+GSE157103_TPM_ilrun <- read.csv("data/GSE157103_TPM.csv") %>% 
+  filter(X.symbol == "ILRUN") %>% 
+  gather(Sample, TPM) %>%   
+  filter(Sample != "X.symbol") %>% 
+  mutate(sample.id = str_extract(Sample, "(\\d)+")) %>% 
+  mutate(disease = str_remove(Sample, "(\\d)+" )) %>% 
+  mutate(TPM = as.numeric(TPM)) %>%
+  mutate(sample.id = as.numeric(sample.id)) %>% 
+  left_join(GSE157103_metadata_all, by = "Sample") %>% 
+  mutate(age = str_extract(age, "(\\d)+")) %>% 
+  mutate(age = as.numeric(age))
+
+icu_ilrun_plot <-  
+
+age_ilrun_plot <- ggplot(GSE157103_TPM_ilrun, aes(x= age, y= TPM)) +
+  geom_point()+
+  labs(title = "ILRUN expression in leukocytes", 
+       y ="transcripts per million reads")
+
+sex_ilrun_plot <- ggplot(GSE157103_TPM_ilrun, aes(x= sex, y= TPM)) +
+  geom_boxplot()+
+  geom_jitter(width = 0.2)+
+  labs(title = "ILRUN expression in leukocytes", 
+       y ="transcripts per million reads")
+
+fibrinogen_ilrun_plot <- ggplot(GSE157103_TPM_ilrun, aes(x= fibrinogen, y= TPM, color = icu)) +
+  geom_point()+
+  labs(title = "ILRUN expression in leukocytes", 
+       y ="transcripts per million reads")
+
+## low ILRUN more likely to end up in ICU
+
+ggsave(filename = "results/GSE157103_ILRUN_ICU.png", plot = icu_ilrun_plot, width = 20, height = 15, dpi = 600, units = "cm")
+
+
+```
+
+```{r GSE61220 TGFB and TFN in airway epithelial cells}
+
+GSE61220_metadata <- read.csv("data/GSE61220_filtered_metadata.csv") %>% 
+  rename(sample = X)
+
+GSE61220  <- read.csv("data/GSE61220_GeneLevel_Normalized(CPM.and.TMM)_data.csv") %>% 
+  as_tibble() %>%
+  select(-X) %>% 
+  filter(gene_symbol == "ACE2" | gene_symbol == "AGT"| gene_symbol == "AGT" | gene_symbol == "C6orf106" ) %>%
+  gather(sample, cpm, -gene_symbol) %>%
+  mutate(gene_symbol = str_replace(gene_symbol, "C6orf106" , "ILRUN"))%>%
+  left_join(GSE61220_metadata, by = "sample")
+
+GSE61220_ILRUN <- GSE61220 %>% 
+  filter(gene_symbol == "ILRUN") %>% 
+  filter(tnf.alpha.treatment == "None")
+
+GSE61220_ACE2<- GSE61220 %>% 
+  filter(gene_symbol == "ACE2") %>% 
+  filter(tnf.alpha.treatment == "None")
+
+GSE61220_AGT<- GSE61220 %>% 
+  filter(gene_symbol == "AGT") %>% 
+  filter(tnf.alpha.treatment == "None")
+
+plot_GSE61220_ILRUN <- ggplot(GSE61220_ILRUN, aes( y= cpm, x = tgf.beta.treatment )) +
+  geom_boxplot()+
+  labs(title = "ILRUN", 
+       x = "TGFb",
+       y = "normalized counts")
+
+plot_GSE61220_ACE2 <- ggplot(GSE61220_ACE2, aes( y= cpm, x = tgf.beta.treatment )) +
+  geom_boxplot()+
+  labs(title = "ACE2", 
+       x = "TGFb",
+       y = "normalised counts")
+
+plot_GSE61220_AGT <- ggplot(GSE61220_AGT, aes(y= cpm, x = tgf.beta.treatment )) +
+  geom_boxplot()+
+  labs(title = "AGT", 
+       x = "TGFb",
+       y = "normalised counts")
+
+
+
+
+ggsave(filename = "results/GSE117993_gene.png", plot = plot_GSE117993_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+
+
+```
+
+```{r lung epithelial cells from 3 donors}
+
+GSE83492_metadata <- read.csv("data/GSE83492_filtered_metadata.csv") %>% 
+    rename(sample = X)
+
+GSE83492 <- read.csv("data/GSE83492_GeneLevel_Normalized(CPM.and.TMM)_data.csv")%>% 
+  as_tibble() %>%
+  select(-X) %>% 
+  filter(gene_symbol == "ACE2" | gene_symbol == "C6orf106" ) %>%
+  gather(sample, cpm, -gene_symbol) %>%
+  mutate(gene_symbol = str_replace(gene_symbol, "C6orf106" , "ILRUN"))%>%
+  left_join(GSE83492_metadata, by = "sample") %>% 
+  mutate(patient = as.character(patient)) %>% 
+  filter(str_detect(characteristics, "SA AT2"))
+
+GSE83492_ILRUN <- GSE83492 %>% 
+  filter(gene_symbol == "ILRUN")
+
+GSE83492_ACE2<- GSE83492 %>% 
+  filter(gene_symbol == "ACE2")
+
+
+plot_GSE83492_ILRUN <- ggplot(GSE83492, aes( y= cpm, x = patient)) +
+  geom_point()+
+  theme(axis.text.x = element_text(angle = 90))
+  labs(title = "ILRUN",
+       y = "normalized counts")
+
+GSE83492_ACE2 <- ggplot(GSE83492_ACE2, aes( y= cpm, x = cell.type)) +
+  geom_boxplot()+
+  labs(title = "ACE2",
+       y = "normalised counts")
+
+
+
+
+ggsave(filename = "results/GSE117993_gene.png", plot = plot_GSE117993_gene, width = 20, height = 15, dpi = 600, units = "cm")
+
+```
+
+```{r GSE138167 RSV infected Bronchial epithelial cells non CF patrients}
+
+
+GSE138167_metadata <- read.csv("data/GSE138167_metadata.csv") %>% 
+  mutate(donor = str_remove(Individual, "Subject_"))
+
+
+GSE138167_genecounts <- read.csv("data/GSE138167_genecounts.csv") %>%
+  as_tibble() %>% 
+  filter(Symbol == "C6orf106"| Symbol == "ACE2") %>% 
+  select(-gencodeid,-Description, -EnsemblID) %>% 
+  gather(donor, counts, -Symbol) %>% 
+  mutate(donor = str_remove(donor, "KML0")) %>% 
+  full_join(GSE138167_metadata, by = "donor") %>% 
+  select(Symbol, donor, counts, Age, Cell_type, disease_state, gender, infection) %>% 
+  filter(disease_state == 	"non-CF")
+
+GSE138167_ILRUN <- GSE138167_genecounts %>% 
+  filter(Symbol == "C6orf106" )
+GSE138167_ACE2 <- GSE138167_genecounts %>% 
+  filter(Symbol == "ACE2" )
+
+GSE138167_plot_ILRUN <- ggplot(GSE138167_ILRUN, aes (x = donor , y = counts, color = Age ))+
+  geom_jitter(width = 0.2)+
+  labs(title = "ILRUN")
+
+GSE138167_plot_ACE2 <- ggplot(GSE138167_ACE2, aes (x = donor , y = counts, color = Age ))+
+  geom_jitter(width = 0.2)+
+  labs(title = "ACE2")
+
+plot_grid(GSE138167_plot_ILRUN, GSE138167_plot_ACE2)
+
+
+```
+
+
+```{r GSE138167 RSV infected Bronchial epithelial cells in CF patrients}
+
+
+GSE138167_metadata <- read.csv("data/GSE138167_metadata.csv") %>% 
+  mutate(donor = str_remove(Individual, "Subject_"))
+
+
+GSE138167_genecounts_CF <- read.csv("data/GSE138167_genecounts.csv") %>%
+  as_tibble() %>% 
+  filter(Symbol == "C6orf106"| Symbol == "ACE2") %>% 
+  select(-gencodeid,-Description, -EnsemblID) %>% 
+  gather(donor, counts, -Symbol) %>% 
+  mutate(donor = str_remove(donor, "KML0")) %>% 
+  full_join(GSE138167_metadata, by = "donor") %>% 
+  select(Symbol, donor, counts, Age, Cell_type, disease_state, gender, infection) %>% 
+  filter(disease_state == "CF")
+
+GSE138167_ILRUN_CF <- GSE138167_genecounts_CF %>% 
+  filter(Symbol == "C6orf106" )
+GSE138167_ACE2_CF <- GSE138167_genecounts_CF %>% 
+  filter(Symbol == "ACE2" )
+
+GSE138167_plot_ILRUN_CF <- ggplot(GSE138167_ILRUN_CF, aes (x = donor , y = counts, color = Age ))+
+  geom_jitter(width = 0.2)+
+  labs(title = "ILRUN")
+
+GSE138167_plot_ACE2_CF <- ggplot(GSE138167_ACE2_CF, aes (x = donor , y = counts, color = Age ))+
+  geom_jitter(width = 0.2)+
+  labs(title = "ACE2")
+
+plot_grid(GSE138167_plot_ILRUN_CF, GSE138167_plot_ACE2_CF)
+
+
+```
+
