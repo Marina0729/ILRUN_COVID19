@@ -17,6 +17,8 @@ library(tidyverse)
 library(dplyr)
 library(knitr)
 library(cowplot)
+library(DESeq2)
+
 
 knitr::opts_chunk$set(
   echo = TRUE,
@@ -652,6 +654,86 @@ summary(GSE55320neg_aov)
 GSE55320pos_aov <- aov(counts ~ disease, data = GSE55320_CCR4neg)
 
 summary(GSE55320pos_aov)
+
+```
+
+```{r GSE146532 ILRUN in Asthma and COPD}
+
+GSE146532_md_GSM <- read.csv("data/GSE146532_metadata_GSM.csv")
+
+GSE146532_md <- read.csv("data/GSE146532_metadata.csv")
+
+
+GSE146532_counts <- read.csv("data/GSE146532_genecounts.csv",row.names=1)
+
+GSE146532_counts_filtered <- GSE146532_counts %>%
+  as_tibble(rownames = "gene") %>% 
+  gather(sample, counts, -gene) %>%
+  separate(sample, c("s1", "s2","s3", "s4","s5", "s6","s7")) %>% 
+  select(gene, s1, counts)
+  
+GSE146532_counts_filtered %>% 
+  filter(gene == "C6orf106"| gene == "IL6R" | gene == "IRF3" |gene == "A1CF")
+
+#arranging for DESeq2
+rm(list=ls())
+
+dim(GSE146532_counts)
+dim(GSE146532_md)
+
+all(rownames(GSE146532_md) == colnames (GSE146532_counts))
+```
+
+```{r GSE139078_genecounts.csv}
+
+
+GSE139078_genecounts <- read.csv("data/GSE139078_genecounts.csv", header = TRUE)
+
+GSE139078_metadata <- read.csv("data/GSE139078_metadata.csv", header = TRUE) %>% 
+  mutate(sample = str_extract(condition, "\\[.+?\\]")) %>% 
+  mutate(sample = str_replace(sample, "\\]", replacement = "")) %>% 
+  mutate(sample = str_replace(sample, "\\[", replacement = "")) %>% 
+  mutate(condition = str_remove(condition, "\\[.+?\\]" )) %>% 
+  mutate(condition = sub('rep.*', '', condition)) %>% 
+  separate(condition, c("s1", "class", "tissue", "infection", "tretament" )) %>% 
+  select(-s1)
+
+
+
+ILRUN <- GSE139078_genecounts %>%
+  gather(sample, counts, -Symbo) %>% 
+  filter(Symbo == "C6orf106") %>% 
+  full_join(GSE139078_metadata, by = "sample")
+
+ACE2 <- GSE139078_genecounts %>%
+  gather(sample, counts, -Symbo) %>% 
+  filter(Symbo == "ACE2") %>% 
+  full_join(GSE139078_metadata, by = "sample")
+
+
+GSE139078_ILRUN <- ggplot(ILRUN, aes(x= tissue, y = counts, color = infection)) +
+  geom_boxplot()+
+  facet_wrap(~class)+
+  labs(title = "ILRUN")
+
+GSE139078_ACE2 <- ggplot(ACE2, aes(x= tissue, y = counts, color = infection)) +
+  geom_boxplot()+
+  facet_wrap(~class)+
+  labs(title = "ACE2")
+
+legend <- get_legend(GSE139078_ILRUN) 
+
+GSE139078 <- plot_grid(GSE139078_ILRUN + theme(legend.position="none"),
+                  GSE139078_ACE2 + theme(legend.position="none"), nrow = 1)
+
+GSE139078_plot <- plot_grid(GSE139078, legend, rel_widths = c(3, .4))
+
+ggsave(filename = "results/GSE139078_plot.png", plot = GSE139078_plot, width = 20, height = 15, dpi = 600, units = "cm")
+```
+
+```{r  GSE139078_genecounts.csv}
+
+GSE139078_counts <- read.csv("data/GSE140900_counts_1.csv")
 
 ```
 
